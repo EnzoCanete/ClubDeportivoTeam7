@@ -12,8 +12,8 @@ namespace ClubDeportivo.Datos
         public DataTable ObtenerSocios()
         {
             var tabla = new DataTable();
-            // Selección explícita de columnas: unir socio con persona para incluir nroSocio
-            string sql = "SELECT s.nroSocio AS NroSocio, p.dni AS DNI, p.nombre AS Nombre, p.apellido AS Apellido, p.telefono AS Telefono FROM socio s INNER JOIN persona p ON s.persona_dni = p.dni ORDER BY s.nroSocio ASC";
+            // Selección explícita de columnas: unir socio con persona para incluir idSocio
+            string sql = "SELECT s.idSocio AS NroSocio, p.dni AS DNI, p.nombre AS Nombre, p.apellido AS Apellido, p.telefono AS Telefono FROM socio s INNER JOIN persona p ON s.persona_dni = p.dni ORDER BY s.idSocio ASC";
 
             try
             {
