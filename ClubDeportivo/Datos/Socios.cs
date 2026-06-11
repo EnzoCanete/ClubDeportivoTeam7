@@ -10,24 +10,30 @@ namespace ClubDeportivo.Datos
 {
     internal class Socios
     {
-        public string NuevoSocio(Entidades.Socio socio)
+
+        /// <summary>
+        /// Crea persona, socio e inserta una inscripcion en la misma operación (llama a procedimiento almacenado Nuevo_Socio_Inscripcion)
+        /// Devuelve: "1" si el DNI ya existe, "-1" en error, o el idSocio creado como string en caso de éxito.
+        /// </summary>
+        public string NuevoSocioConInscripcion(Entidades.Socio socio, int idHorario, int idPlan, DateTime fechaInicio)
         {
             string salida;
             MySqlConnection sqlCon = new MySqlConnection();
             try
             {
                 sqlCon = Conexion.GetInstancia().CrearConexion();
-                MySqlCommand comando = new MySqlCommand("Nuevo_Socio", sqlCon);
-                // Especificamos que se usa un procedimiento almacenado
+                MySqlCommand comando = new MySqlCommand("Nuevo_Socio_Inscripcion", sqlCon);
                 comando.CommandType = CommandType.StoredProcedure;
 
-                // Le pasamos los datos al procedimiento
                 comando.Parameters.Add("p_dni", MySqlDbType.VarChar).Value = socio.DNI;
                 comando.Parameters.Add("p_nombre", MySqlDbType.VarChar).Value = socio.Nombre;
                 comando.Parameters.Add("p_apellido", MySqlDbType.VarChar).Value = socio.Apellido;
                 comando.Parameters.Add("p_telefono", MySqlDbType.VarChar).Value = socio.Telefono;
 
-                // Configuramos el parámetro de salida (OUT r_respuesta)
+                comando.Parameters.Add("p_idHorario", MySqlDbType.Int32).Value = idHorario;
+                comando.Parameters.Add("p_idPlan", MySqlDbType.Int32).Value = idPlan;
+                comando.Parameters.Add("p_fechaInicio", MySqlDbType.Date).Value = fechaInicio;
+
                 MySqlParameter parRespuesta = new MySqlParameter();
                 parRespuesta.ParameterName = "r_respuesta";
                 parRespuesta.MySqlDbType = MySqlDbType.Int32;
@@ -35,13 +41,13 @@ namespace ClubDeportivo.Datos
                 comando.Parameters.Add(parRespuesta);
 
                 sqlCon.Open();
-                comando.ExecuteNonQuery(); // Ejecutamos el insert
+                comando.ExecuteNonQuery();
 
                 salida = Convert.ToString(parRespuesta.Value);
             }
             catch (Exception ex)
             {
-                salida = ex.Message;
+                salida = "-1: " + ex.Message;
             }
             finally
             {

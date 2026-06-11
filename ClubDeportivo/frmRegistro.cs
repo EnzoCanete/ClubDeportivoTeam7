@@ -174,24 +174,65 @@ namespace ClubDeportivo
             nuevoSocio.Apellido = txtApellido.Text;
             nuevoSocio.Telefono = txtTelefono.Text;
 
-            // 3. Instanciamos la clase Socios de la capa Datos y llamamos al método
-            Datos.Socios dato = new Datos.Socios();
-            string respuesta = dato.NuevoSocio(nuevoSocio);
+            // 3. Validar que se haya seleccionado horario, plan y fecha inicio
+            if (cmbHorarios.SelectedValue == null || cmbPlanPago.SelectedValue == null || cmbFechaInicio.SelectedValue == null)
+            {
+                MessageBox.Show("Debe seleccionar actividad, horario, plan y fecha de inicio.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            // 4. Analizamos la respuesta de la base de datos (Recordemos que 1 significa que ya existe)
+            int idHorario;
+            int idPlan;
+            DateTime fechaInicio;
+
+            if (!int.TryParse(cmbHorarios.SelectedValue.ToString(), out idHorario))
+            {
+                MessageBox.Show("Id de horario inválido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!int.TryParse(cmbPlanPago.SelectedValue.ToString(), out idPlan))
+            {
+                MessageBox.Show("Id de plan inválido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            try
+            {
+                fechaInicio = (DateTime)cmbFechaInicio.SelectedValue;
+            }
+            catch
+            {
+                MessageBox.Show("Fecha de inicio inválida.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 4. Instanciamos la clase Socios de la capa Datos y llamamos al método que crea socio + inscripcion
+            Datos.Socios dato = new Datos.Socios();
+            string respuesta = dato.NuevoSocioConInscripcion(nuevoSocio, idHorario, idPlan, fechaInicio);
+
+            // 5. Analizamos la respuesta de la base de datos
             if (respuesta == "1")
             {
                 MessageBox.Show("El DNI ingresado ya se encuentra registrado en el sistema.", "Registro Duplicado", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            else if (respuesta.StartsWith("-1"))
+            {
+                MessageBox.Show("Error registrando socio/inscripción: " + respuesta, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             else
             {
-                MessageBox.Show("Socio registrado exitosamente. Su número de socio es: " + respuesta, "Registro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Socio e inscripción registrados exitosamente. Su número de socio es: " + respuesta, "Registro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // Limpiamos los campos para una nueva carga
                 txtDNI.Text = "";
                 txtNombre.Text = "";
                 txtApellido.Text = "";
                 txtTelefono.Text = "";
+                cmbActividad.SelectedIndex = -1;
+                cmbHorarios.DataSource = null;
+                cmbPlanPago.SelectedIndex = -1;
+                cmbFechaInicio.DataSource = null;
             }
         }
 
