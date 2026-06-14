@@ -34,6 +34,10 @@ namespace ClubDeportivo.Datos
                 comando.Parameters.Add("p_idPlan", MySqlDbType.Int32).Value = idPlan;
                 comando.Parameters.Add("p_fechaInicio", MySqlDbType.Date).Value = fechaInicio;
 
+                // fechaEntregaCarnet: 7 days from today (date only)
+                DateTime fechaEntregaCarnet = DateTime.Today.AddDays(7);
+                comando.Parameters.Add("p_fechaEntregaCarnet", MySqlDbType.Date).Value = fechaEntregaCarnet;
+
                 MySqlParameter parRespuesta = new MySqlParameter();
                 parRespuesta.ParameterName = "r_respuesta";
                 parRespuesta.MySqlDbType = MySqlDbType.Int32;
