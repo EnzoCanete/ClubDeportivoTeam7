@@ -32,6 +32,9 @@ namespace ClubDeportivo
             labelDetalleImporte.Text = string.Empty;
             labelCantidad.Text = "";
             labelDetalleFecha.Text = string.Empty;
+            // clear inputs
+            if (txtBuscar != null) txtBuscar.Text = string.Empty;
+            if (dtpFecha != null) dtpFecha.Value = DateTime.Today;
         }
 
         private void ButtonLimpiarBusqueda_Click(object sender, EventArgs e)
@@ -225,6 +228,99 @@ namespace ClubDeportivo
                 principal.Show();
             }
             this.Close();
+        }
+
+        private void BtnGuardar_Click(object sender, EventArgs e)
+        {
+            // Handle socio payment
+            if (radioBuscarSocio.Checked)
+            {
+                // parse nro socio from txtBuscar
+                int nro;
+                if (!int.TryParse(txtBuscar.Text.Trim(), out nro))
+                {
+                    MessageBox.Show("Ingrese número de socio válido antes de cobrar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var repo = new Datos.CuotaRepositorio();
+                DateTime ahora = DateTime.Now;
+                string resp = repo.CobrarCuotaSocio(nro, ahora);
+
+                if (resp == "1")
+                {
+                    MessageBox.Show("Pago registrado correctamente.", "Pago OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // refresh displayed data by re-running search
+                    BtnBuscar_Click(this, EventArgs.Empty);
+                    // then clear fields so user can start new search
+                    ClearSearchResults();
+                }
+                else if (resp == "0")
+                {
+                    MessageBox.Show("No existen cuotas pendientes para este socio.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Error registrando pago: " + resp, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                return;
+            }
+
+            // Handle no-socio payment
+            if (radioBuscarNoSocio.Checked)
+            {
+                int nroVisita;
+                if (!int.TryParse(txtBuscar.Text.Trim(), out nroVisita))
+                {
+                    MessageBox.Show("Ingrese número de visita válido antes de cobrar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var tablaRepo = new Datos.TablaRepositorio();
+                var visitaRow = tablaRepo.ObtenerVisitaPorNro(nroVisita);
+                if (visitaRow == null)
+                {
+                    MessageBox.Show("Visita no encontrada.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // validate pending
+                if (!visitaRow.IsNull("pagado") && Convert.ToInt32(visitaRow["pagado"]) == 1)
+                {
+                    MessageBox.Show("La visita ya fue abonada.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (visitaRow.IsNull("idVisitaActividad"))
+                {
+                    MessageBox.Show("Id de visita inválido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                int idVisitaActividad = Convert.ToInt32(visitaRow["idVisitaActividad"]);
+                DateTime fechaPago = dtpFecha != null ? dtpFecha.Value : DateTime.Now;
+
+                var visitaRepo = new Datos.VisitaRepositorio();
+                string respuesta = visitaRepo.CobrarVisitaNoSocio(idVisitaActividad, fechaPago);
+
+                if (respuesta == "1")
+                {
+                    MessageBox.Show("Pago registrado correctamente.", "Pago OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    BtnBuscar_Click(this, EventArgs.Empty);
+                    ClearSearchResults();
+                }
+                else if (respuesta == "0")
+                {
+                    MessageBox.Show("La visita no existe o ya fue abonada.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Error registrando pago: " + respuesta, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                return;
+            }
         }
 
     }
